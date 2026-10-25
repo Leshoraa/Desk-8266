@@ -7,20 +7,53 @@ DESK-8266 is an embedded smart desktop instrument and environmental dashboard po
 
 ## Features
 - **Mode 1: Internet-Synced Analog Clock (Default)**
-  - Quartz-style discrete 1-second ticking hands (hour: 40px, minute: 58px, second: 70px with 12px tail counterweight).
-  - macOS Dock dynamic magnification wave: 12 hour digits smoothly glide radially ($R = 84 \to 91$ px), expand to double size, and interpolate brightness (RGB 75 to 255) at ~35 FPS based on sub-second millisecond timing.
+  - Bold Rounded Pill Hands: Hour (40px, 5px wide convex pill hand with rounded tip), Minute (58px, 3px solid baton/pill hand with rounded tip in `#b7c3bf` Sage Silver), Second (70px, 3px tapered body in `#3bbb8c` Mint Green with 12px counterweight tail) anchored by a 4px center cap.
+  - 3D Parallax Crystal Glass Layering: Clock hands and center cap float forward towards the viewer (+1.8px along in-plane tilt normal) relative to the hour digits and recessed aperture, creating optical stereoscopic depth inside the watch case.
+  - Dial Perimeter Hour Dots: Discrete circular markers at all 12 hour positions ($R = 108$ px); 12, 3, 6, and 9 o'clock highlighted as small circles in `#6BAF84` Sage Green, with intermediate hours (1, 2, 4, 5, 7, 8, 10, 11) marked in White.
+  - Dynamic macOS Dock Magnification Wave: Active hour digits emerge dynamically as the second/minute hand approaches, radially gliding ($R = 84 \to 89$ px), smoothly expanding up to a refined 1.50x scale, and blooming in brilliant white / mint green via Hermite cubic color blending at 60 FPS.
+  - Zero Inactive Text Clutter: Inactive hour numbers are completely hidden (0% opacity) on the deep black dial, ensuring a pristine minimalist face free from distracting gray text.
+  - Pure Minimalist Dress Dial: Pure dial face free from distracting date apertures for optimal hand sweep aesthetics.
   - Zero hand-to-digit collisions: hands operate within $R \le 70$ px while numbers occupy $R \ge 81$ px.
-  - Precision 100% horizontal alignment at 3 o'clock ($y = 120$).
-- **Mode 2: Environment Dashboard**
-  - Displays real-time temperature (0.1 °C resolution) and humidity (% RH) from a DHT22 sensor.
-  - Text elements automatically orient to align with device tilt angle.
+  - Pure Solid Black theme background (`#000000` / `0x0000`) matching boot/connecting screen for maximum OLED-like contrast.
+- **Mode 2: Environment Dashboard & Instrument Cluster**
+  - Displays real-time temperature (0.1 °C resolution) and humidity (% RH) from a DHT22 sensor against the matching Pure Solid Black background.
+  - Live Localized Weather Icon: Positioned exclusively at 12 o'clock ($R = 48$ px) above temperature readout for Sendangadi, Mlati, Sleman (Sun, Moon, Cloud, Rain, Thunder) fetched via Open-Meteo REST API.
+  - Live Localized Weather Icon: Positioned exclusively at 12 o'clock ( = 54$ px) above temperature readout for Sendangadi, Mlati, Sleman (Sun, Moon, Cloud, Rain, Thunder) enlarged to 24x24 px for high desk visibility.
+  - Dynamic Scale In/Out: Weather icon (1.5x), temperature text (2.8x bold hero), and humidity text (1.5x) scale smoothly with continuous opacity blending during transitions, resting rock-solid and stable when active.
+  - Dual circular arc gauges ($R = 96$ px):
+    - **Left Arc**: Temperature thermometer gauge ($15^\circ\text{C}$ to $40^\circ\text{C}$).
+    - **Right Arc**: Humidity hygrometer gauge ($10\%$ to $100\%$) rendered in 3px thick `#6BAF84` Botanical Sage Green (`0x6D70`).
+    - Gauges dynamically fill from bottom to top, precalculated once per frame with 0 trigonometric operations inside the band rendering loop and a 0.05° sub-degree threshold for silky smooth 60 FPS tilt rotation.
+- **Mode 3: Camera-Style Settings Rotary Dial**
+  - Inspired by classic mirrorless/DSLR camera top-plate rotary dials (Leica, Sony, Nikon).
+  - **Knurled Perimeter Hash Marks**: Fine radial tick marks spanning a $220^\circ$ upper arc ($R = 104 \to 114$ px) with a bold 12 o'clock index pointer.
+  - **Dynamic Pill Capsule Badge**: Active setting highlighted at the 12 o'clock detent inside a $46 \times 16$ px rounded capsule badge (`[ MAX ]`, `[ MID ]`, `[ ECO ]`, `[ PEEK ]`, `[ STAY ]`, `[ NITE ]`, `[ INFO ]`, `[ EXIT ]`).
+  - **Rotary Badges Track**: Surrounding items glide along a circular path ($R = 74$ px) as 15 px circular button badges (`(H)`, `(M)`, `(E)`, `(P)`, `(S)`, `(N)`, `(i)`, `(X)`).
+  - **Smooth Rotary Easing**: Each capacitive touch advance triggers an ease-out angular rotary glide into the detent.
+  - **Live Settings Controls**:
+    - `MAX` / `MID` / `ECO`: Adjusts PWM backlight brightness live (100%, 60%, 25%).
+    - `PEEK` / `STAY`: Enables or disables the reciprocal auto-glance feature.
+    - `NITE`: Toggles flip-to-stealth night stand dimming.
+    - `INFO`: Live diagnostics showing IP address, WiFi RSSI (dBm), and temperature.
+    - `EXIT`: Clean return to Clock mode (also triggered by 800ms long press or 15s idle timeout).
+- **Continuous Reversible Mode Switch Transition**
+  - Fully bidirectional and interruptible state machine: if the user interrupts a mode transition halfway (e.g. at 40% progress), the animation smoothly reverses towards the target without sudden stops, snaps, or lost visual states.
+  - Hermite cubic aperture bloom & hand retraction over 280ms with zero flickering and rock-solid 60 FPS.
+- **Flip-to-Stealth / Night Stand Mode**
+- **Intelligent Reciprocal Auto-Glance (*Auto-Peek*)**
+  - **Clock Mode Glance**: Periodically (every 60 seconds), the screen smoothly transitions to the Weather/Sensors dashboard for 16 seconds to provide a comfortable environmental status update, then seamlessly returns to the clock.
+  - **Weather Mode Glance**: If the user manually toggled to the Weather page, periodically every 60 seconds it reciprocally peeks at the clock for 16 seconds and smoothly returns to the weather dashboard.
+  - **Zero Fighting Touch Priority**: Tapping the capacitive touch sensor at any moment immediately cancels the peek and sets the active mode to the user's explicit preference.
+  - **Night-Stand Suppressed**: Automatically paused when the device is inverted upside down for sleeping.
+  - Inverting the device upside down (pitch $145^\circ - 215^\circ$) automatically dims the backlight to 20% and transitions the palette to warm monochrome amber on pitch black for comfortable night viewing.
 - **Full 360° Gyroscope Horizon Tracking**
-  - Continuous 1:1 screen rotation driven by an MPU6050 accelerometer.
-  - $8.0^\circ$ hysteresis resting snap to ensure stability on flat desks without angular jitter.
-  - Physical G-force shock suppression.
+  - MPU6050 hardware 20Hz Digital Low Pass Filter (DLPF) eliminates mechanical vibration and hand tremor.
+  - Continuous deadband subtraction ($1.2^\circ$ threshold) and adaptive velocity curve eliminate limit-cycle jitter.
+  - Solid $4.5^\circ$ zero-snap with $6.5^\circ$ hysteresis locks upright firmly when resting on a desk.
+  - 80 MHz high-speed SPI bus for sub-12ms frame delivery.
 - **Capacitive Touch Mode Toggle**
-  - TTP223 touch sensor on GPIO 3 (RX) provides debounced switching between Clock and Sensor modes.
-  - Elements illuminate green upon touch contact.
+  - TTP223 touch sensor on GPIO 3 (RX) provides clean 250ms debounced switching between Clock and Sensor modes.
+  - Retains the authentic, designed color palette at all times without intrusive color tinting.
 - **Zero-Flicker Band-Buffered Graphics Engine**
   - Screen divided into 6 horizontal bands ($240 \times 40$ pixels = 19.2 KB RAM).
   - RAM usage preserved at 61% with $>30$ KB free dynamic heap to guarantee WiFi stack stability without watchdog timeouts.
@@ -74,6 +107,9 @@ Desk-8266/
 ├── MotionSensor.cpp        # I2C driver, coordinate transformations, and zero-snap
 ├── NetworkTime.h           # Wi-Fi station and SNTP time manager interface
 ├── NetworkTime.cpp         # Connection management and sub-second time tracking
+├── WeatherService.h        # Open-Meteo REST API weather client interface
+├── WeatherService.cpp      # Non-blocking weather poller and WMO code mapper
+├── weather_icons.h         # PROGMEM 16x16 weather bitmap icons
 ├── font5x7.h               # PROGMEM ASCII 5x7 bitmap font
 └── README.md               # Technical architecture and developer guide
 ```

@@ -21,6 +21,15 @@ bool MotionSensor::wakeDevice(uint8_t address) {
     return false;
   }
 
+  // Configure hardware Digital Low Pass Filter (DLPF) to 20Hz (Register 0x1A CONFIG)
+  // Suppresses high-frequency accelerometer noise, mechanical vibrations, and hand micro-tremor
+  Wire.beginTransmission(address);
+  Wire.write(0x1A); // CONFIG register
+  Wire.write(0x04); // DLPF_CFG = 4 (20Hz Accel bandwidth, 8.5ms delay)
+  if (Wire.endTransmission(true) != 0) {
+    return false;
+  }
+
   Wire.beginTransmission(address);
   Wire.write(0x1C); // ACCEL_CONFIG register
   Wire.write(0x08); // Select +/- 4G full scale range (8192 LSB/g)
@@ -102,7 +111,7 @@ void MotionSensor::update() {
   while (rawAngle >= 360.0f) rawAngle -= 360.0f;
 
   // Hysteresis zero-snap around resting upright angle
-  float snapThreshold = (currentPitchDeg == 0.0f) ? (IDLE_ZERO_SNAP + 1.5f) : IDLE_ZERO_SNAP;
+  float snapThreshold = (currentPitchDeg == 0.0f) ? (IDLE_ZERO_SNAP + 2.0f) : IDLE_ZERO_SNAP;
   if (rawAngle <= snapThreshold || rawAngle >= (360.0f - snapThreshold)) {
     rawAngle = 0.0f;
   }
@@ -114,24 +123,28 @@ void MotionSensor::update() {
 
   float absDelta = fabsf(delta);
   if (absDelta >= IDLE_MOTION_DEADBAND) {
-    float speedFactor = 0.25f;
-    if (absDelta > 45.0f) {
-      speedFactor = 0.50f;
-    } else if (absDelta > 15.0f) {
-      speedFactor = 0.38f;
+    // Continuous deadband subtraction: ensures zero step discontinuity at threshold
+    float effectiveDelta = delta - ((delta > 0.0f) ? IDLE_MOTION_DEADBAND : -IDLE_MOTION_DEADBAND);
+
+    // Adaptive speed curve: gentle damping for small hand wobbles, instant 1:1 tracking for deliberate turns
+    float speedFactor = 0.35f;
+    if (absDelta > 25.0f) {
+      speedFactor = 0.85f;
+    } else if (absDelta > 8.0f) {
+      speedFactor = 0.60f;
     }
 
     if (isShock) {
       speedFactor *= 0.3f;
     }
 
-    float step = delta * speedFactor;
+    float step = effectiveDelta * speedFactor;
     if (step > MAX_SPEED_DEG_FRAME) step = MAX_SPEED_DEG_FRAME;
     if (step < -MAX_SPEED_DEG_FRAME) step = -MAX_SPEED_DEG_FRAME;
 
     currentPitchDeg += step;
   } else if (rawAngle == 0.0f && absDelta > 0.05f) {
-    currentPitchDeg += delta * 0.20f;
+    currentPitchDeg += delta * 0.25f;
     if (fabsf(currentPitchDeg) < 0.2f || currentPitchDeg > 359.8f) {
       currentPitchDeg = 0.0f;
     }

@@ -14,7 +14,8 @@ public:
   void begin(ProgressCallback onProgress = nullptr);
   bool isConnected() const;
   String getLocalIPString() const;
-  void getCurrentTime(int& hour, int& minute, int& second, unsigned long& subSecondMs);
+  void getCurrentTime(int& hour, int& minute, int& second, unsigned long& subSecondMs,
+                      char* dateBuffer = nullptr, size_t bufferSize = 0);
 
 private:
   bool connected;

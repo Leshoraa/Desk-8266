@@ -87,12 +87,20 @@ String NetworkTime::getLocalIPString() const {
   return "0.0.0.0";
 }
 
-void NetworkTime::getCurrentTime(int& hour, int& minute, int& second, unsigned long& subSecondMs) {
+void NetworkTime::getCurrentTime(int& hour, int& minute, int& second, unsigned long& subSecondMs,
+                                 char* dateBuffer, size_t bufferSize) {
   time_t nowSec = time(nullptr);
   struct tm* timeInfo = localtime(&nowSec);
   hour   = timeInfo ? timeInfo->tm_hour : 0;
   minute = timeInfo ? timeInfo->tm_min  : 0;
   second = timeInfo ? timeInfo->tm_sec  : 0;
+
+  if (dateBuffer && bufferSize >= 8) {
+    static const char* const DAY_ABBREV[7] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
+    int wday = (timeInfo && timeInfo->tm_wday >= 0 && timeInfo->tm_wday < 7) ? timeInfo->tm_wday : 0;
+    int mday = timeInfo ? timeInfo->tm_mday : 1;
+    snprintf(dateBuffer, bufferSize, "%s %d", DAY_ABBREV[wday], mday);
+  }
 
   unsigned long nowMs = millis();
   if (nowSec != lastObservedSec) {

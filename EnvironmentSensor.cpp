@@ -14,7 +14,7 @@ void EnvironmentSensor::begin(uint8_t dataPin) {
 
 void EnvironmentSensor::update() {
   unsigned long now = millis();
-  if (now - lastPollTimestamp < 1000) {
+  if (now - lastPollTimestamp < 2500) {
     return;
   }
   lastPollTimestamp = now;
