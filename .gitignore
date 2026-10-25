@@ -1,0 +1,11 @@
+# Private credentials and environment variables
+secrets.h
+.env
+*.env
+
+# Arduino build and editor temporary directories
+build/
+.arduino/
+*.o
+*.bin
+*.elf
